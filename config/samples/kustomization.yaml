@@ -1,0 +1,5 @@
+## Append samples you want in your CSV to this file as resources ##
+resources:
+- watcher.stakater.com_v1alpha1_resourcewatcher.yaml
+- watcher.stakater.com_v1alpha1_statusupdater.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

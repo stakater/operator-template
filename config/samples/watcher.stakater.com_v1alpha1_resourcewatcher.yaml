@@ -1,0 +1,12 @@
+apiVersion: watcher.stakater.com.stakater.com/v1alpha1
+kind: ResourceWatcher
+metadata:
+  labels:
+    app.kubernetes.io/name: resourcewatcher
+    app.kubernetes.io/instance: resourcewatcher-sample
+    app.kubernetes.io/part-of: stakater-operator-boilerplate
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: stakater-operator-boilerplate
+  name: resourcewatcher-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,12 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: stakater-operator-boilerplate
+  namespace: openshift-operators
+spec:
+  channel: "alpha"
+  installPlanApproval: Automatic
+  name: stakater-operator-boilerplate
+  source: stakater-operator-boilerplate
+  sourceNamespace: openshift-marketplace
+  startingCSV: stakater-operator-boilerplate.v0.0.1

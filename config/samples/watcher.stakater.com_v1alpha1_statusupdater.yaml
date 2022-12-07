@@ -1,0 +1,12 @@
+apiVersion: watcher.stakater.com.stakater.com/v1alpha1
+kind: StatusUpdater
+metadata:
+  labels:
+    app.kubernetes.io/name: statusupdater
+    app.kubernetes.io/instance: statusupdater-sample
+    app.kubernetes.io/part-of: stakater-operator-boilerplate
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: stakater-operator-boilerplate
+  name: statusupdater-sample
+spec:
+  # TODO(user): Add fields here
