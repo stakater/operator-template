@@ -10,8 +10,8 @@ const ReconcileErrorReason = "LastReconcileCycleFailed"
 const ReconcileSuccess = "ReconcileSuccess"
 const ReconcileSuccessReason = "LastReconcileCycleSucceded"
 
-// ConditionsAware represents a CRD type that has been enabled with metav1.Conditions, it can then benefit of a series of utility methods.
-type ConditionsAware interface {
+// IConditionsAware represents a CRD type that has been enabled with metav1.Conditions, it can then benefit of a series of utility methods.
+type IConditionsAware interface {
 	GetConditions() []metav1.Condition
 	SetConditions(conditions []metav1.Condition)
 }

@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -23,7 +24,6 @@ type ReconcilerBase struct {
 	client   client.Client
 	scheme   *runtime.Scheme
 	recorder record.EventRecorder
-	Logger   logr.Logger
 }
 
 // Create reconciler
@@ -52,9 +52,13 @@ func (r *ReconcilerBase) GetScheme() *runtime.Scheme {
 	return r.scheme
 }
 
+func (r *ReconcilerBase) Logger() logr.Logger {
+	return logf.Log.WithName(r.Name)
+}
+
 // Update Status conditions to inform users of changes
 func (r *ReconcilerBase) UpdateCondition(cr client.Object, condition metav1.Condition) {
-	if conditionsAware, updateStatus := cr.(api.ConditionsAware); updateStatus {
+	if conditionsAware, updateStatus := cr.(api.IConditionsAware); updateStatus {
 		conditionsAware.SetConditions(api.AddOrReplaceCondition(condition, conditionsAware.GetConditions()))
 	}
 }
@@ -111,6 +115,16 @@ func (r *ReconcilerBase) CreateResource(context context.Context, obj client.Obje
 	return nil
 }
 
+// Update resource status
+func (r *ReconcilerBase) UpdateStatus(context context.Context, cr client.Object) error {
+	err := r.GetClient().Status().Update(context, cr)
+	if err != nil {
+		r.Logger().Error(err, "unable to update status")
+		return err
+	}
+	return nil
+}
+
 /*
 Error handling will do 2 things
 1. Add failed condition
@@ -118,7 +132,7 @@ Error handling will do 2 things
 */
 func (r *ReconcilerBase) ManageError(context context.Context, cr client.Object, issue error, msg string) error {
 	r.GetRecorder().Event(cr, "Warning", "ProcessingError", issue.Error())
-	if conditionsAware, updateStatus := any(cr).(api.ConditionsAware); updateStatus {
+	if conditionsAware, updateStatus := any(cr).(api.IConditionsAware); updateStatus {
 		condition := metav1.Condition{
 			Type:               api.ReconcileError,
 			LastTransitionTime: metav1.Now(),
@@ -128,13 +142,9 @@ func (r *ReconcilerBase) ManageError(context context.Context, cr client.Object, 
 			Status:             metav1.ConditionTrue,
 		}
 		conditionsAware.SetConditions(api.AddOrReplaceCondition(condition, conditionsAware.GetConditions()))
-		err := r.GetClient().Status().Update(context, cr)
-		if err != nil {
-			r.Logger.Error(err, "unable to update status")
-			return err
-		}
+		return r.UpdateStatus(context, cr)
 	} else {
-		r.Logger.Info("object is not ConditionsAware, not setting status")
+		r.Logger().Info("object is not IConditionsAware, not setting status")
 	}
 	return issue
 }
@@ -143,7 +153,7 @@ func (r *ReconcilerBase) ManageError(context context.Context, cr client.Object, 
 Error handling will add success condition to status
 */
 func (r *ReconcilerBase) ManageSuccess(context context.Context, cr client.Object, msg string) error {
-	if conditionsAware, updateStatus := cr.(api.ConditionsAware); updateStatus {
+	if conditionsAware, updateStatus := cr.(api.IConditionsAware); updateStatus {
 		condition := metav1.Condition{
 			Type:               api.ReconcileSuccess,
 			LastTransitionTime: metav1.Now(),
@@ -153,13 +163,9 @@ func (r *ReconcilerBase) ManageSuccess(context context.Context, cr client.Object
 			Message:            msg,
 		}
 		conditionsAware.SetConditions(api.AddOrReplaceCondition(condition, conditionsAware.GetConditions()))
-		err := r.GetClient().Status().Update(context, cr)
-		if err != nil {
-			r.Logger.Error(err, "unable to update status")
-			return err
-		}
+		return r.UpdateStatus(context, cr)
 	} else {
-		r.Logger.Info("object is not ConditionsAware, not setting status")
+		r.Logger().Info("object is not IConditionsAware, not setting status")
 	}
 	return nil
 }

@@ -6,18 +6,14 @@ package controllers
 
 import (
 	"context"
-
-	"k8s.io/apimachinery/pkg/runtime"
+	"fmt"
+	"github.com/stakater/operator-boilerplate/api/v1alpha1"
+	"github.com/stakater/operator-boilerplate/utils"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	watcherstakatercomv1alpha1 "github.com/stakater/operator-boilerplate/api/v1alpha1"
 )
 
 type StatusUpdaterReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+	utils.ReconcilerBase
 }
 
 //+kubebuilder:rbac:groups=watcher.stakater.com.stakater.com,resources=statusupdaters,verbs=get;list;watch;create;update;patch;delete
@@ -25,14 +21,46 @@ type StatusUpdaterReconciler struct {
 //+kubebuilder:rbac:groups=watcher.stakater.com.stakater.com,resources=statusupdaters/finalizers,verbs=update
 
 func (r *StatusUpdaterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	instance := &v1alpha1.StatusUpdater{}
+	err := r.GetCtrResource(ctx, req.NamespacedName, instance)
+	if err != nil {
+		r.Logger().Info("no StatusUpdater resource found ")
+		return ctrl.Result{}, err
+	}
 
+	r.Logger().Info(fmt.Sprintf("found StatusUpdater [%s], start reconciling ...", instance.GetName()))
+
+	// Make sure all incidents are reported
+	for _, incident := range instance.Spec.Incidents {
+		found := false
+		for _, condition := range instance.GetConditions() {
+			if incident.Type == condition.Type {
+				found = true
+				break
+			}
+		}
+
+		// If incident has not been reported then report it
+		if !found {
+			if incident.Reason == v1alpha1.FailedReason {
+				r.UpdateFailedCondition(instance, incident.Type, incident.Message, fmt.Errorf(incident.Message))
+			} else {
+				r.UpdateSuccessCondition(instance, incident.Type, incident.Message)
+			}
+		}
+	}
+
+	// Update conditions will not trigger status update automatically so we do it here
+	err = r.UpdateStatus(ctx, instance)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *StatusUpdaterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&watcherstakatercomv1alpha1.StatusUpdater{}).
+		For(&v1alpha1.StatusUpdater{}).
 		Complete(r)
 }

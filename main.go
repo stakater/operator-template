@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/stakater/operator-boilerplate/utils"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -97,8 +98,7 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controllers.StatusUpdaterReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		ReconcilerBase: utils.NewFromManager(mgr, "StatusUpdater"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StatusUpdater")
 		os.Exit(1)
