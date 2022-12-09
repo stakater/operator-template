@@ -69,8 +69,8 @@ func (r *ResourceWatcherReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ResourceWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// Add all watchers to index by watchers name & namespace
-	IndexField := "resource-watcher"
+	// Add all watchers to the cache index with name & namespace for lookup
+	IndexField := "resource-watchers"
 	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &alpha1.ResourceWatcher{}, IndexField, func(rawObj client.Object) []string {
 		configDeployment := rawObj.(*alpha1.ResourceWatcher)
 		return []string{configDeployment.Name, configDeployment.Namespace}
@@ -81,8 +81,10 @@ func (r *ResourceWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&alpha1.ResourceWatcher{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Watches(&source.Kind{Type: &v1.Secret{}}, handler.EnqueueRequestsFromMapFunc(func(object client.Object) []reconcile.Request {
+			// For all secret changes call their respective watcher to reconcile
 			watchers := &alpha1.ResourceWatcherList{}
 			listOps := &client.ListOptions{
+				// Look up the watchers we stored above for significantly faster lookup
 				FieldSelector: fields.OneTermEqualSelector(IndexField, object.GetNamespace()),
 				Namespace:     object.GetNamespace(),
 			}
@@ -102,6 +104,5 @@ func (r *ResourceWatcherReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			}
 			return requests
 		})).
-		Watches(&source.Kind{Type: &v1.ConfigMap{}}, &handler.EnqueueRequestForObject{}).
 		Complete(r)
 }
