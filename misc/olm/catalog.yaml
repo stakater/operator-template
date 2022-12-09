@@ -1,7 +1,7 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
-  name: stakater-operator-boilerplate
+  name: operator-boilerplate
   namespace: openshift-marketplace
 spec:
   displayName: Stakater Operator Boilerplate

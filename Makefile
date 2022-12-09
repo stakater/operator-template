@@ -28,7 +28,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # This variable is used to construct full image tags for bundle and catalog images.
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
-# stakater.com/stakater-operator-boilerplate-bundle:$VERSION and stakater.com/stakater-operator-boilerplate-catalog:$VERSION.
+# stakater.com/operator-boilerplate-bundle:$VERSION and stakater.com/operator-boilerplate-catalog:$VERSION.
 IMAGE_TAG_BASE ?= docker.io/stakaterdockerhubpullroot/operator-boilerplate
 
 # BUNDLE_IMG defines the image:tag used for the bundle.

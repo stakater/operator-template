@@ -1,4 +1,4 @@
-# stakater-operator-boilerplate
+# operator-boilerplate
 Boilerplate project for kick-starting your operator development
 
 ## Description
@@ -36,11 +36,11 @@ make publish
 ```sh
 kind: CatalogSource
 spec:
-  image: stakaterdockerhubpullroot/stakater-operator-boilerplate-catalog:v{VERSION}
+  image: stakaterdockerhubpullroot/operator-boilerplate-catalog:v{VERSION}
   
 kind: Subscription
 spec:
-  startingCSV: stakater-operator-boilerplate.v{VERSION}
+  startingCSV: operator-boilerplate.v{VERSION}
 ```
 
 4. Deploy the `catalogs` and `subscription` manifests.
