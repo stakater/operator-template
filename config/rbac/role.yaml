@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - watcher.stakater.com.stakater.com
+  resources:
+  - statusupdaters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - watcher.stakater.com.stakater.com
+  resources:
+  - statusupdaters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - watcher.stakater.com.stakater.com
+  resources:
+  - statusupdaters/status
+  verbs:
+  - get
+  - patch
+  - update

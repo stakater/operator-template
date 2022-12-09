@@ -20,7 +20,6 @@ import (
 	"flag"
 	"github.com/stakater/operator-boilerplate/utils"
 	"os"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -32,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	watcherstakatercomv1alpha1 "github.com/stakater/operator-boilerplate/api/v1alpha1"
+	v1alpha1 "github.com/stakater/operator-boilerplate/api/v1alpha1"
 	"github.com/stakater/operator-boilerplate/controllers"
 	//+kubebuilder:scaffold:imports
 )
@@ -45,7 +44,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(watcherstakatercomv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -91,8 +90,7 @@ func main() {
 	}
 
 	if err = (&controllers.ResourceWatcherReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		ReconcilerBase: utils.NewFromManager(mgr, "ResourceWatcher"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ResourceWatcher")
 		os.Exit(1)

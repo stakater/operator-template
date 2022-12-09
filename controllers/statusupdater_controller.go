@@ -1,5 +1,6 @@
 /*
-Status updater will update status with condition and events
+Status updater will update status with condition and events as specified in specs.incidents
+This example demonstrate how reconcile utils can help with the common task of reporting common progress to end users
 */
 
 package controllers
@@ -22,7 +23,7 @@ type StatusUpdaterReconciler struct {
 
 func (r *StatusUpdaterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	instance := &v1alpha1.StatusUpdater{}
-	err := r.GetCtrResource(ctx, req.NamespacedName, instance)
+	err := r.GetResource(ctx, req.NamespacedName, instance)
 	if err != nil {
 		r.Logger().Info("no StatusUpdater resource found ")
 		return ctrl.Result{}, err

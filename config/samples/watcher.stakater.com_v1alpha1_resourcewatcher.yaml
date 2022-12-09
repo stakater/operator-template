@@ -9,4 +9,4 @@ metadata:
     app.kubernetes.io/created-by: stakater-operator-boilerplate
   name: resourcewatcher-sample
 spec:
-  # TODO(user): Add fields here
+  watchSecrets: true

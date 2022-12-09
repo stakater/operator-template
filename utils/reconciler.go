@@ -8,7 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -20,24 +23,26 @@ import (
 type ReconcilerFunc func(r *ReconcilerBase) (reconcile.Result, error)
 
 type ReconcilerBase struct {
-	Name     string
-	client   client.Client
-	scheme   *runtime.Scheme
-	recorder record.EventRecorder
+	Name       string
+	client     client.Client
+	restConfig *rest.Config
+	scheme     *runtime.Scheme
+	recorder   record.EventRecorder
 }
 
 // Create reconciler
-func NewBaseReconciler(client client.Client, scheme *runtime.Scheme, recorder record.EventRecorder) ReconcilerBase {
+func NewBaseReconciler(client client.Client, scheme *runtime.Scheme, recorder record.EventRecorder, restConfig *rest.Config) ReconcilerBase {
 	return ReconcilerBase{
-		client:   client,
-		scheme:   scheme,
-		recorder: recorder,
+		client:     client,
+		scheme:     scheme,
+		restConfig: restConfig,
+		recorder:   recorder,
 	}
 }
 
 // Create reconciler from manager instance
 func NewFromManager(mgr manager.Manager, ctrName string) ReconcilerBase {
-	return NewBaseReconciler(mgr.GetClient(), mgr.GetScheme(), mgr.GetEventRecorderFor(ctrName))
+	return NewBaseReconciler(mgr.GetClient(), mgr.GetScheme(), mgr.GetEventRecorderFor(ctrName), mgr.GetConfig())
 }
 
 func (r *ReconcilerBase) GetClient() client.Client {
@@ -52,8 +57,32 @@ func (r *ReconcilerBase) GetScheme() *runtime.Scheme {
 	return r.scheme
 }
 
+func (r *ReconcilerBase) GetRestConfig() *rest.Config {
+	return r.restConfig
+}
+
 func (r *ReconcilerBase) Logger() logr.Logger {
 	return logf.Log.WithName(r.Name)
+}
+
+// GetDirectClient returns a non cached client. Especially important when
+// It's critical to always get the most up-to-date resources
+func (r *ReconcilerBase) GetDirectClient() (client.Client, error) {
+	return r.GetDirectClientWithSchemeBuilders()
+}
+
+// GetDirectClientWithSchemeBuilders returns a non cached client initialized with the scheme.buidlers passed as parameters
+func (r *ReconcilerBase) GetDirectClientWithSchemeBuilders(addToSchemes ...func(s *runtime.Scheme) error) (client.Client, error) {
+	scheme := runtime.NewScheme()
+	for _, addToscheme := range append(addToSchemes, clientgoscheme.AddToScheme) {
+		err := addToscheme(scheme)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return client.New(r.GetRestConfig(), client.Options{
+		Scheme: scheme,
+	})
 }
 
 // Update Status conditions to inform users of changes
@@ -170,11 +199,31 @@ func (r *ReconcilerBase) ManageSuccess(context context.Context, cr client.Object
 	return nil
 }
 
-// Fetch the controller resource
-func (r *ReconcilerBase) GetCtrResource(ctx context.Context, ns types.NamespacedName, instance client.Object) error {
+// Fetch the single resource
+func (r *ReconcilerBase) GetResource(ctx context.Context, ns types.NamespacedName, instance client.Object) error {
 	err := r.GetClient().Get(ctx, ns, instance)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	return nil
+}
+
+// List resources
+func (r *ReconcilerBase) ListResources(ctx context.Context, instance client.ObjectList, options *client.ListOptions) error {
+	err := r.GetClient().List(ctx, instance, options)
+	if err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+	return nil
+}
+
+// List only metadata of resources. This will reduce the load
+func (r *ReconcilerBase) ListResourceMetadata(ctx context.Context, gkv schema.GroupVersionKind, opts ...client.ListOption) (*metav1.PartialObjectMetadataList, error) {
+	metadata := &metav1.PartialObjectMetadataList{}
+	metadata.SetGroupVersionKind(gkv)
+	err := r.GetClient().List(ctx, metadata, opts...)
+	if err != nil && !errors.IsNotFound(err) {
+		return nil, err
+	}
+	return metadata, nil
 }

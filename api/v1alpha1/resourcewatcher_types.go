@@ -5,10 +5,11 @@ import (
 )
 
 type ResourceWatcherSpec struct {
-	Foo string `json:"foo,omitempty"`
-}
+	// +optional
+	WatchSecrets bool `json:"watchSecrets,omitempty"`
 
-type ResourceWatcherStatus struct {
+	// +optional
+	WatchConfigmaps bool `json:"watchConfigmaps,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -20,6 +21,24 @@ type ResourceWatcher struct {
 
 	Spec   ResourceWatcherSpec   `json:"spec,omitempty"`
 	Status ResourceWatcherStatus `json:"status,omitempty"`
+}
+
+type ResourceWatcherStatus struct {
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+
+	Secrets map[string]string `json:"secrets,omitempty"`
+}
+
+func (m *ResourceWatcher) GetConditions() []metav1.Condition {
+	return m.Status.Conditions
+}
+
+func (m *ResourceWatcher) SetConditions(conditions []metav1.Condition) {
+	m.Status.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true
