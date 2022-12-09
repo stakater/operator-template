@@ -11,6 +11,8 @@ import (
 	"github.com/stakater/operator-boilerplate/api/v1alpha1"
 	"github.com/stakater/operator-boilerplate/utils"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 type StatusUpdaterReconciler struct {
@@ -62,6 +64,7 @@ func (r *StatusUpdaterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 // SetupWithManager sets up the controller with the Manager.
 func (r *StatusUpdaterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.StatusUpdater{}).
+		// Ignore changes in metadata and status
+		For(&v1alpha1.StatusUpdater{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)
 }

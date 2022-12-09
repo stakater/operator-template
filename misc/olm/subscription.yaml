@@ -9,4 +9,4 @@ spec:
   name: stakater-operator-boilerplate
   source: stakater-operator-boilerplate
   sourceNamespace: openshift-marketplace
-  startingCSV: stakater-operator-boilerplate.v0.0.1
+  startingCSV: operator-boilerplate.v0.0.1

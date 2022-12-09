@@ -1,0 +1,50 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: stakater-operator-boilerplate.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - displayName: Resource Watcher
+      kind: ResourceWatcher
+      name: resourcewatchers.watcher.stakater.com.stakater.com
+      version: v1alpha1
+    - displayName: Status Updater
+      kind: StatusUpdater
+      name: statusupdaters.watcher.stakater.com.stakater.com
+      version: v1alpha1
+  description: Example operator project
+  displayName: Operator boilerplate
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - operator-sdk
+  - openshift
+  - kubernetes
+  links:
+  - name: Stakater Operator Boilerplate
+    url: https://stakater-operator-boilerplate.domain
+  maturity: alpha
+  provider:
+    name: Stakater AB
+    url: https://www.stakater.com
+  version: 0.0.0
